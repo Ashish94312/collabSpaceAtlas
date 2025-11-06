@@ -34,11 +34,7 @@ Thumbs.db
 
 # Static files (if collected)
 staticfiles/
-static/
 media/
-
-# Deployment
-.vercel
 
 # Distribution / packaging
 dist/
