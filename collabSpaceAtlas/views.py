@@ -5,12 +5,19 @@ from .markdown_renderer import render_markdown
 
 
 def _get_topic_tree():
-    loader = ContentLoader()
-    topics_dir = loader.topics_dir
-    topic_tree = []
+    try:
+        loader = ContentLoader()
+    except Exception:
+        return []
     
-    if not topics_dir.exists():
-        return topic_tree
+    try:
+        topics_dir = loader.topics_dir
+        topic_tree = []
+        
+        if not topics_dir.exists():
+            return topic_tree
+    except Exception:
+        return []
     
     topic_folders = sorted([d for d in topics_dir.iterdir() if d.is_dir() and not d.name.startswith('.')])
     
@@ -48,13 +55,31 @@ def _get_topic_tree():
 
 
 def content_list(request):
-    loader = ContentLoader()
+    try:
+        loader = ContentLoader()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render(request, 'collabSpaceAtlas/content_list.html', {
+            'contents': [],
+            'search_query': '',
+            'difficulty_filter': '',
+            'topic_slug': None,
+            'topic_tree': [],
+            'roadmap': None,
+            'error': str(e)
+        })
     
     search_query = request.GET.get('q', '')
     difficulty_filter = request.GET.get('difficulty', '')
     topic_slug = request.GET.get('topic', None)
     
-    contents = loader.get_all_content(status='published')
+    try:
+        contents = loader.get_all_content(status='published')
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        contents = []
     
     if topic_slug:
         topic_contents = loader.get_all_content(topic=topic_slug, status='published')

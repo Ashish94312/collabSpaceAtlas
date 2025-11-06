@@ -7,11 +7,19 @@ from django.conf import settings
 
 class ContentLoader:
     def __init__(self, content_dir: Optional[str] = None):
-        if content_dir is None:
-            content_dir = getattr(settings, 'CONTENT_DIR', 'content')
-        
-        self.content_dir = Path(settings.BASE_DIR) / content_dir
-        self.topics_dir = self.content_dir / 'topics'
+        try:
+            if content_dir is None:
+                content_dir = getattr(settings, 'CONTENT_DIR', 'content')
+            
+            if isinstance(content_dir, Path):
+                self.content_dir = content_dir
+            else:
+                self.content_dir = Path(settings.BASE_DIR) / content_dir
+            self.topics_dir = self.content_dir / 'topics'
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise
     
     def _parse_frontmatter(self, content: str) -> Tuple[Dict, str]:
         metadata = {}
@@ -66,18 +74,24 @@ class ContentLoader:
     def list_content_files(self, topic: Optional[str] = None) -> List[Path]:
         files = []
         
-        if topic:
-            topic_path = self.topics_dir / topic
-            if topic_path.exists() and topic_path.is_dir():
-                files.extend(topic_path.glob('*.md'))
-        else:
-            if self.topics_dir.exists():
-                for topic_dir in self.topics_dir.iterdir():
-                    if topic_dir.is_dir():
-                        files.extend(topic_dir.glob('*.md'))
-                        for subdir in topic_dir.iterdir():
-                            if subdir.is_dir():
-                                files.extend(subdir.glob('*.md'))
+        try:
+            if topic:
+                topic_path = self.topics_dir / topic
+                if topic_path.exists() and topic_path.is_dir():
+                    files.extend(topic_path.glob('*.md'))
+            else:
+                if self.topics_dir.exists():
+                    for topic_dir in self.topics_dir.iterdir():
+                        if topic_dir.is_dir():
+                            files.extend(topic_dir.glob('*.md'))
+                            try:
+                                for subdir in topic_dir.iterdir():
+                                    if subdir.is_dir():
+                                        files.extend(subdir.glob('*.md'))
+                            except Exception:
+                                pass
+        except Exception:
+            pass
         
         return sorted(files)
     
