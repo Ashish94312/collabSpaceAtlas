@@ -39,6 +39,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Content directory
 CONTENT_DIR = BASE_DIR / 'content'
 
+# Vercel environment check
+VERCEL_ENV = config('VERCEL', default=False, cast=bool)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -56,27 +59,33 @@ if not ALLOWED_HOSTS:
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
     "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
     "django.contrib.staticfiles",
     "collabSpaceAtlas",
 ]
 
+if not VERCEL_ENV:
+    INSTALLED_APPS.extend([
+        "django.contrib.admin",
+        "django.contrib.auth",
+        "django.contrib.sessions",
+        "django.contrib.messages",
+    ])
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-if not config('VERCEL', default=False, cast=bool):
+if not VERCEL_ENV:
     MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+    MIDDLEWARE.extend([
+        "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "django.contrib.messages.middleware.MessageMiddleware",
+    ])
 
 ROOT_URLCONF = "collabSpace.urls"
 
@@ -89,9 +98,7 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
+            ] + (["django.contrib.auth.context_processors.auth", "django.contrib.messages.context_processors.messages"] if not VERCEL_ENV else []),
         },
     },
 ]
@@ -103,6 +110,7 @@ WSGI_APPLICATION = "collabSpace.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASE_URL = config('DATABASE_URL', default=None)
+
 if DATABASE_URL:
     try:
         import dj_database_url
@@ -110,38 +118,65 @@ if DATABASE_URL:
             'default': dj_database_url.config(default=DATABASE_URL)
         }
     except ImportError:
+        if VERCEL_ENV:
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': ':memory:',
+                }
+            }
+        else:
+            DATABASES = {
+                "default": {
+                    "ENGINE": "django.db.backends.sqlite3",
+                    "NAME": BASE_DIR / "db.sqlite3",
+                }
+            }
+else:
+    if VERCEL_ENV:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': ':memory:',
+            }
+        }
+    else:
         DATABASES = {
             "default": {
                 "ENGINE": "django.db.backends.sqlite3",
                 "NAME": BASE_DIR / "db.sqlite3",
             }
         }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+
+DATABASE_ROUTERS = []
+
+if VERCEL_ENV:
+    import django.db.backends.sqlite3.base
+    original_check = django.db.backends.sqlite3.base.DatabaseWrapper.check_database_version_supported
+    def check_database_version_supported(*args, **kwargs):
+        pass
+    django.db.backends.sqlite3.base.DatabaseWrapper.check_database_version_supported = check_database_version_supported
 
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
+AUTH_PASSWORD_VALIDATORS = []
+if not VERCEL_ENV:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        },
+        {
+            "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        },
+    ]
 
 
 # Internationalization

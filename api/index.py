@@ -5,12 +5,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'collabSpace.settings')
+os.environ.setdefault('VERCEL', '1')
 
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
 except Exception as e:
-    import logging
     import traceback
     import sys as sys_module
     
@@ -19,6 +19,7 @@ except Exception as e:
     error_msg += f"Python path: {sys.path}\n"
     error_msg += f"BASE_DIR: {BASE_DIR}\n"
     error_msg += f"DJANGO_SETTINGS_MODULE: {os.environ.get('DJANGO_SETTINGS_MODULE')}\n"
+    error_msg += f"VERCEL: {os.environ.get('VERCEL')}\n"
     
     print(error_msg, file=sys_module.stderr)
     raise

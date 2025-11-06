@@ -15,15 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("", include("collabSpaceAtlas.urls")),
 ]
+
+if not settings.DEBUG or not getattr(settings, 'VERCEL_ENV', False):
+    try:
+        from django.contrib import admin
+        urlpatterns.insert(0, path("admin/", admin.site.urls))
+    except:
+        pass
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
