@@ -1,0 +1,439 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CollabSpace Atlas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .sidebar-topic {
+      position: relative;
+    }
+    .subtopic-dropdown {
+      display: none;
+      position: absolute;
+      left: 100%;
+      top: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      min-width: 200px;
+      z-index: 50;
+      padding: 0.5rem;
+    }
+    .sidebar-topic:hover .subtopic-dropdown {
+      display: block;
+    }
+    .topic-link.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <nav class="bg-white border-b shadow-sm">
+    <div class="max-w-full mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">CollabSpace Atlas</h1>
+      </div>
+    </div>
+  </nav>
+
+  <div class="flex h-[calc(100vh-80px)]">
+    <aside class="w-64 bg-white border-r shadow-sm overflow-y-auto">
+      <div class="p-4">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4">Topics</h2>
+        <div class="space-y-1">
+          <a href="{% url 'content-list' %}" 
+             class="block px-3 py-2 rounded-md text-sm font-medium {% if not topic_slug %}topic-link active{% else %}topic-link text-gray-700 hover:bg-gray-100{% endif %}">
+            All Content
+          </a>
+          {% for item in topic_tree %}
+          <div class="sidebar-topic">
+            <a href="{% url 'content-list' %}?topic={{ item.slug }}" 
+               class="block px-3 py-2 rounded-md text-sm font-medium {% if topic_slug == item.slug %}topic-link active{% else %}topic-link text-gray-700 hover:bg-gray-100{% endif %} flex items-center justify-between">
+              <span>{{ item.name }}</span>
+              {% if item.content_count > 0 %}
+              <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ item.content_count }}</span>
+              {% endif %}
+              {% if item.subtopics %}
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              {% endif %}
+            </a>
+            {% if item.subtopics %}
+            <div class="subtopic-dropdown ml-2">
+              {% for subtopic_item in item.subtopics %}
+              <a href="{% url 'content-list' %}?topic={{ subtopic_item.slug }}" 
+                 class="block px-3 py-2 rounded-md text-sm {% if topic_slug == subtopic_item.slug %}bg-blue-50 text-blue-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %} flex items-center justify-between">
+                <span>{{ subtopic_item.name }}</span>
+                {% if subtopic_item.content_count > 0 %}
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ subtopic_item.content_count }}</span>
+                {% endif %}
+              </a>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% empty %}
+          <p class="text-sm text-gray-500 px-3 py-2">No topics found. Create folders in content/topics/</p>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <form method="get" class="flex flex-wrap gap-4 items-end">
+            {% if topic_slug %}
+            <input type="hidden" name="topic" value="{{ topic_slug }}">
+            {% endif %}
+            <div class="flex-1 min-w-[200px]">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <input type="text" name="q" value="{{ search_query }}" placeholder="Search by title or tags..." 
+                     class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     id="search-input">
+            </div>
+            <div class="min-w-[150px]">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+              <select name="difficulty" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">All</option>
+                <option value="beginner" {% if difficulty_filter == 'beginner' %}selected{% endif %}>Beginner</option>
+                <option value="intermediate" {% if difficulty_filter == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                <option value="advanced" {% if difficulty_filter == 'advanced' %}selected{% endif %}>Advanced</option>
+              </select>
+            </div>
+            <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-medium">
+              Search
+            </button>
+            {% if search_query or difficulty_filter or topic_slug %}
+            <a href="{% url 'content-list' %}" class="text-gray-600 hover:text-gray-800 px-4 py-2">
+              Clear
+            </a>
+            {% endif %}
+          </form>
+        </div>
+
+        {% if roadmap %}
+        <div class="mb-6">
+          <div class="mb-4">
+            {% if topic_slug %}
+              {% for item in topic_tree %}
+                {% if item.slug == topic_slug %}
+                  <h2 class="text-xl font-semibold text-gray-900">{{ item.name }}</h2>
+                {% endif %}
+                {% for subtopic in item.subtopics %}
+                  {% if subtopic.slug == topic_slug %}
+                    <h2 class="text-xl font-semibold text-gray-900">{{ subtopic.name }}</h2>
+                  {% endif %}
+                {% endfor %}
+              {% endfor %}
+            {% else %}
+              <h2 class="text-xl font-semibold text-gray-900">{{ roadmap.metadata.title|default:"Complete Learning Roadmap" }}</h2>
+              {% if roadmap.metadata.description %}
+              <p class="text-gray-600 mt-1">{{ roadmap.metadata.description }}</p>
+              {% endif %}
+            {% endif %}
+          </div>
+          
+          <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Learning Roadmap</h3>
+              <button id="roadmap-toggle" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg id="roadmap-toggle-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+            </div>
+            <div id="roadmap-container" class="roadmap-visualization transition-all duration-300 overflow-hidden"></div>
+            <script>
+              const roadmapData = {{ roadmap.nodes_json|safe }};
+              const roadmapConnections = {{ roadmap.connections_json|safe }};
+              
+              document.addEventListener('DOMContentLoaded', function() {
+                const container = document.getElementById('roadmap-container');
+                if (!container) return;
+                
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '600');
+                svg.style.background = '#f9fafb';
+                container.appendChild(svg);
+                
+                const nodesByLevel = {};
+                roadmapData.forEach(node => {
+                  const level = node.level || 1;
+                  if (!nodesByLevel[level]) nodesByLevel[level] = [];
+                  nodesByLevel[level].push(node);
+                });
+                
+                const levels = Object.keys(nodesByLevel).sort((a, b) => a - b);
+                const nodeMap = {};
+                const nodePositions = {};
+                
+                const levelHeight = 500 / (levels.length + 1);
+                levels.forEach((level, levelIdx) => {
+                  const nodes = nodesByLevel[level];
+                  const nodeWidth = 120;
+                  const spacing = Math.max(40, (800 - (nodes.length * nodeWidth)) / (nodes.length + 1));
+                  let xPos = spacing;
+                  
+                  nodes.forEach((node) => {
+                    const y = 50 + (levelIdx + 1) * levelHeight;
+                    nodeMap[node.id] = node;
+                    nodePositions[node.id] = { x: xPos + nodeWidth / 2, y: y };
+                    xPos += nodeWidth + spacing;
+                  });
+                });
+                
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '10');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '3');
+                marker.setAttribute('orient', 'auto');
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', '0 0, 10 3, 0 6');
+                polygon.setAttribute('fill', '#94a3b8');
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+                svg.insertBefore(defs, svg.firstChild);
+                
+                roadmapConnections.forEach(conn => {
+                  const from = nodePositions[conn.from];
+                  const to = nodePositions[conn.to];
+                  if (from && to) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', from.x);
+                    line.setAttribute('y1', from.y);
+                    line.setAttribute('x2', to.x);
+                    line.setAttribute('y2', to.y);
+                    line.setAttribute('stroke', '#94a3b8');
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('marker-end', 'url(#arrowhead)');
+                    svg.appendChild(line);
+                  }
+                });
+                
+                Object.keys(nodePositions).forEach(nodeId => {
+                  const pos = nodePositions[nodeId];
+                  const node = nodeMap[nodeId];
+                  
+                  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                  rect.setAttribute('x', pos.x - 60);
+                  rect.setAttribute('y', pos.y - 25);
+                  rect.setAttribute('width', '120');
+                  rect.setAttribute('height', '50');
+                  rect.setAttribute('rx', '8');
+                  
+                  const colors = {
+                    'foundation': '#3b82f6',
+                    'supervised': '#10b981',
+                    'unsupervised': '#f59e0b',
+                    'advanced': '#8b5cf6',
+                    'deep-learning': '#ec4899'
+                  };
+                  rect.setAttribute('fill', colors[node.type] || '#6b7280');
+                  rect.setAttribute('stroke', '#fff');
+                  rect.setAttribute('stroke-width', '2');
+                  rect.style.cursor = 'pointer';
+                  rect.addEventListener('click', function() {
+                    if (node.slug) {
+                      if (node.topic) {
+                        // Navigate to topic page
+                        window.location.href = '{% url "content-list" %}?topic=' + node.slug;
+                      } else {
+                        // Navigate to content page
+                        window.location.href = '{% url "content-view" slug="PLACEHOLDER" %}'.replace('PLACEHOLDER', node.slug);
+                      }
+                    }
+                  });
+                  svg.appendChild(rect);
+                  
+                  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                  text.setAttribute('x', pos.x);
+                  text.setAttribute('y', pos.y);
+                  text.setAttribute('text-anchor', 'middle');
+                  text.setAttribute('fill', '#fff');
+                  text.setAttribute('font-size', '12');
+                  text.setAttribute('font-weight', '600');
+                  text.style.pointerEvents = 'none';
+                  
+                  const words = node.label.split(' ');
+                  const lines = [];
+                  let currentLine = words[0];
+                  
+                  for (let i = 1; i < words.length; i++) {
+                    const testLine = currentLine + ' ' + words[i];
+                    if (testLine.length > 15) {
+                      lines.push(currentLine);
+                      currentLine = words[i];
+                    } else {
+                      currentLine = testLine;
+                    }
+                  }
+                  lines.push(currentLine);
+                  
+                  lines.forEach((line, idx) => {
+                    const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                    tspan.setAttribute('x', pos.x);
+                    tspan.setAttribute('dy', idx === 0 ? '-6' : '14');
+                    tspan.textContent = line;
+                    text.appendChild(tspan);
+                  });
+                  
+                  svg.appendChild(text);
+                });
+              });
+            </script>
+            <style>
+              .roadmap-visualization {
+                overflow-x: auto;
+                overflow-y: hidden;
+                transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+              }
+              .roadmap-visualization svg {
+                min-width: 800px;
+              }
+              #roadmap-toggle-icon {
+                transition: transform 0.3s ease;
+              }
+            </style>
+            <script>
+              // Collapsible roadmap functionality
+              document.addEventListener('DOMContentLoaded', function() {
+                const toggle = document.getElementById('roadmap-toggle');
+                const container = document.getElementById('roadmap-container');
+                const icon = document.getElementById('roadmap-toggle-icon');
+                
+                if (toggle && container) {
+                  // Wait for roadmap to render first
+                  setTimeout(function() {
+                    // Check if roadmap was collapsed previously
+                    const isCollapsed = localStorage.getItem('roadmap-collapsed') === 'true';
+                    const fullHeight = container.scrollHeight + 'px';
+                    
+                    if (isCollapsed) {
+                      container.style.maxHeight = '0';
+                      container.style.opacity = '0';
+                      container.style.overflow = 'hidden';
+                      icon.style.transform = 'rotate(-90deg)';
+                    } else {
+                      container.style.maxHeight = fullHeight;
+                      container.style.opacity = '1';
+                    }
+                    
+                    toggle.addEventListener('click', function() {
+                      const isCurrentlyCollapsed = container.style.maxHeight === '0px';
+                      
+                      if (isCurrentlyCollapsed) {
+                        // Expand
+                        container.style.maxHeight = container.scrollHeight + 'px';
+                        container.style.opacity = '1';
+                        container.style.overflow = 'auto';
+                        icon.style.transform = 'rotate(0deg)';
+                        localStorage.setItem('roadmap-collapsed', 'false');
+                      } else {
+                        // Collapse
+                        container.style.maxHeight = '0';
+                        container.style.opacity = '0';
+                        container.style.overflow = 'hidden';
+                        icon.style.transform = 'rotate(-90deg)';
+                        localStorage.setItem('roadmap-collapsed', 'true');
+                      }
+                    });
+                  }, 500);
+                }
+              });
+            </script>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if contents %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for item in contents %}
+          <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+            <div class="p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                <a href="{% url 'content-view' slug=item.slug %}" class="hover:text-blue-600">
+                  {{ item.title }}
+                </a>
+              </h3>
+              
+              <p class="text-sm text-gray-600 mb-4 line-clamp-3">
+                {{ item.content|truncatewords:20|striptags }}
+              </p>
+              
+              <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
+                <div class="flex items-center space-x-3">
+                  {% if item.estimated_time %}
+                  <span>{{ item.estimated_time }} min</span>
+                  {% endif %}
+                  {% if item.difficulty %}
+                  <span class="px-2 py-0.5 bg-gray-100 rounded">{{ item.difficulty|title }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              
+              {% if item.tags %}
+              <div class="flex flex-wrap gap-1 mb-4">
+                {% for tag in item.tags %}
+                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">{{ tag }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+              
+              <div class="flex items-center justify-between pt-4 border-t">
+                <a href="{% url 'content-view' slug=item.slug %}" 
+                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  Read →
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="mt-4 text-lg font-medium text-gray-900">No content found</h3>
+          <p class="mt-2 text-sm text-gray-500">
+            {% if search_query or difficulty_filter or topic_slug %}
+            Try adjusting your filters or search terms.
+            {% else %}
+            Add content markdown files to the content/topics/ directory.
+            {% endif %}
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+
+<script>
+  // Enable Enter key to submit search
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const searchForm = searchInput ? searchInput.closest('form') : null;
+    
+    if (searchInput && searchForm) {
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          searchForm.submit();
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>
