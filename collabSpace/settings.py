@@ -12,7 +12,26 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config, Csv
+
+try:
+    from decouple import config, Csv
+except ImportError:
+    def config(key, default=None, cast=None):
+        value = os.environ.get(key, default)
+        if cast and value is not None:
+            if cast == bool:
+                return str(value).lower() in ('true', '1', 'yes', 'on')
+            return cast(value)
+        return value
+    
+    class Csv:
+        def __init__(self, default=None):
+            self.default = default
+        
+        def __call__(self, value):
+            if not value:
+                return self.default.split(',') if self.default else []
+            return [v.strip() for v in value.split(',') if v.strip()]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +50,8 @@ SECRET_KEY = config('SECRET_KEY', default="django-insecure-$(bjl)gp@=5!so2oj*c$9
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.vercel.app', cast=Csv())
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app']
 
 # Application definition
 
