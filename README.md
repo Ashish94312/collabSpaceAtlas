@@ -283,40 +283,6 @@ New to open source? We're beginner-friendly! Start with:
 - Improving existing content
 - Reporting bugs with reproduction steps
 
-### 🚀 Contributing to Our Other Projects
-
-We're building multiple open-source tools to transform how people collaborate and learn. If you're interested in collaborative editing and real-time document creation, check out our other project:
-
-#### [CollabSpace - Real-time Document Editor](https://github.com/Ashish94312/collabSpace) 📝
-
-**CollabSpace** is a real-time collaborative document editor that competes with Google Docs and Notion. Built with React, Node.js, and WebSockets, it offers:
-
-- **Real-time Collaboration** - Multiple users editing simultaneously
-- **Rich Text Editing** - Full formatting, images, and media support
-- **Multi-page Documents** - Create complex documents with multiple pages
-- **WebSocket Integration** - Instant synchronization across all users
-- **JWT Authentication** - Secure user management
-- **Image Handling** - Drag & drop, resize, and manage images
-
-**Why Contribute to CollabSpace?**
-- 🎯 **Impact** - Help build an open-source alternative to proprietary tools
-- 🚀 **Modern Stack** - Work with React, Node.js, WebSockets, and Prisma
-- 🤝 **Community** - Join a growing community of contributors
-- 📚 **Learning** - Gain experience with real-time collaboration systems
-- 💡 **Innovation** - Help shape the future of collaborative editing
-
-**Easy Ways to Get Started:**
-- Fix bugs and improve error handling
-- Enhance mobile responsiveness
-- Add new editor features
-- Improve WebSocket reconnection logic
-- Add documentation and examples
-- Star the repository and share with others!
-
-👉 **Check it out:** [https://github.com/Ashish94312/collabSpace](https://github.com/Ashish94312/collabSpace)
-
-Every contribution matters - whether it's here at CollabSpace Atlas or at CollabSpace, your help makes a difference! 🌟
-
 ---
 
 ## 🔧 Development
@@ -359,7 +325,7 @@ The architecture is designed to be extensible:
 
 We're also working on other exciting projects:
 
-### [CollabSpace](https://github.com/Ashish94312/collabSpace) 🔗
+### [CollabSpace Doc](https://github.com/Ashish94312/collabSpace) 🔗
 
 A real-time collaborative document editor built with React, Node.js, and WebSockets. CollabSpace allows multiple users to edit documents simultaneously with features like rich text editing, image handling, page management, and real-time synchronization.
 
